@@ -13,7 +13,23 @@ selectMap <- function(x, ...) {
 #'          for selected (\code{styleTrue}) and deselected (\code{styleFalse})
 #' @param ns \code{string} name for the Shiny \code{namespace} to use.  The \code{ns}
 #'          is unlikely to require a change.
-#' @param viewer \code{function} for the viewer.  See Shiny \code{\link[shiny]{viewer}}.
+#' @param viewer \code{function} for the viewer. See Shiny \code{\link[shiny]{viewer}}.
+#'          NOTE: when using \code{browserViewer(browser = getOption("browser"))} to
+#'          open the app in the default browser, the browser window will automatically
+#'          close when closing the app (by pressing "done" or "cancel") in most browsers.
+#'          Firefox is an exception. See Details for instructions on how to enable this
+#'          behaviour in Firefox.
+#'
+#' @details
+#'   When setting \code{viewer = browserViewer(browser = getOption("browser"))} and
+#'   the systems default browser is Firefox, the browser window will likely not
+#'   automatically close when the app is closed (by pressing "done" or "cancel").
+#'   To enable automatic closing of tabs/windows in Firefox try the following:
+#'   \itemize{
+#'     \item{input "about:config " to your firefox address bar and hit enter}
+#'     \item{make sure your "dom.allow_scripts_to_close_windows" is true}
+#'   }
+#'
 #' @export
 selectMap.leaflet <- function(
   x = NULL,
@@ -37,7 +53,22 @@ selectMap.leaflet <- function(
       selectModUI(id = ns, height = "97%"),
       height=NULL, width=NULL
     ),
-    miniUI::gadgetTitleBar("Select Features on Map", right = miniUI::miniTitleBarButton("done", "Done", primary = TRUE))
+    miniUI::gadgetTitleBar("Select Features on Map", right = miniUI::miniTitleBarButton("done", "Done", primary = TRUE)),
+    tags$script(HTML(
+"
+// close browser window on session end
+$(document).on('shiny:disconnected', function() {
+  // check to make sure that button was pressed
+  //  to avoid websocket disconnect caused by some other reason than close
+  if(
+    Shiny.shinyapp.$inputValues['cancel:shiny.action'] ||
+    Shiny.shinyapp.$inputValues['done:shiny.action']
+  ) {
+    window.close()
+  }
+})
+"
+    ))
   )
 
   server <- function(input, output, session) {

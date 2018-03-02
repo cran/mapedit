@@ -10,8 +10,9 @@
 \usage{
 selectFeatures(x, ...)
 
-\method{selectFeatures}{sf}(x = NULL, map = NULL, index = FALSE,
-  viewer = shiny::paneViewer(), ...)
+\method{selectFeatures}{sf}(x = NULL, mode = c("click", "draw"),
+  op = sf::st_intersects, map = NULL, index = FALSE,
+  viewer = shiny::paneViewer(), label = NULL, ...)
 
 \method{selectFeatures}{Spatial}(x, ...)
 }
@@ -19,6 +20,13 @@ selectFeatures(x, ...)
 \item{x}{features to select}
 
 \item{...}{other arguments}
+
+\item{mode}{one of "click" or "draw".}
+
+\item{op}{the geometric binary predicate to use for the selection.
+Can be any of \code{\link{geos_binary_pred}}. In the spatial
+operation the drawn features will be evaluated as x and the supplied
+feature as y. Ignored if \code{mode = "click"}.}
 
 \item{map}{a background \code{leaflet} or \code{mapview} map
 to be used for editing. If \code{NULL} a blank
@@ -28,10 +36,28 @@ mapview canvas will be provided.}
 the index of selected features rather than the actual
 selected features}
 
-\item{viewer}{\code{function} for the viewer.  See Shiny \code{\link[shiny]{viewer}}.}
+\item{viewer}{\code{function} for the viewer.  See Shiny \code{\link[shiny]{viewer}}.
+NOTE: when using \code{browserViewer(browser = getOption("browser"))} to
+open the app in the default browser, the browser window will automatically
+close when closing the app (by pressing "done" or "cancel") in most browsers.
+Firefox is an exception. See Details for instructions on how to enable this
+behaviour in Firefox.}
+
+\item{label}{\code{character} vector or \code{formula} for the
+content that will appear in label/tooltip.}
 }
 \description{
 Interactively Select Map Features
+}
+\details{
+When setting \code{viewer = browserViewer(browser = getOption("browser"))} and
+  the systems default browser is Firefox, the browser window will likely not
+  automatically close when the app is closed (by pressing "done" or "cancel").
+  To enable automatic closing of tabs/windows in Firefox try the following:
+  \itemize{
+    \item{input "about:config " to your firefox address bar and hit enter}
+    \item{make sure your "dom.allow_scripts_to_close_windows" is true}
+  }
 }
 \examples{
 \dontrun{

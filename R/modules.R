@@ -97,6 +97,7 @@ editModUI <- function(id, ...) {
 #' @param sf \code{logical} to return simple features.  \code{sf=FALSE} will return
 #'          \code{GeoJSON}.
 #' @param record \code{logical} to record all edits for future playback.
+#' @param crs see \code{\link[sf]{st_crs}}.
 #'
 #' @return server function for Shiny module
 #' @import shiny
@@ -106,7 +107,8 @@ editMod <- function(
   leafmap,
   targetLayerId = NULL,
   sf = TRUE,
-  record = FALSE
+  record = FALSE,
+  crs = 4326
 ) {
   # check to see if addDrawToolbar has been already added to the map
   if(is.null(
@@ -114,7 +116,7 @@ editMod <- function(
       function(cl) {
         cl$method == "addDrawToolbar"
       },
-      leafmap$leafmap$calls
+      leafmap$x$calls
     )
   )) {
     # add draw toolbar if not found
@@ -126,6 +128,7 @@ editMod <- function(
       circleOptions = FALSE,
       rectangleOptions = leaflet.extras::drawRectangleOptions(repeatMode = TRUE),
       markerOptions = leaflet.extras::drawMarkerOptions(repeatMode = TRUE),
+      #circleMarkerOptions = leaflet.extras::drawCircleMarkerOptions(repeatMode = TRUE),
       editOptions = leaflet.extras::editToolbarOptions()
     )
   }
@@ -238,7 +241,7 @@ editMod <- function(
           )
 
           combine_list_of_sf(
-            lapply(features, st_as_sf.geo_list)
+            lapply(features, st_as_sf.geo_list, crs = crs)
           )
         }
       )
@@ -246,7 +249,7 @@ editMod <- function(
       recorder <- lapply(
         recorder,
         function(evt) {
-          feature = st_as_sfc.geo_list(evt$feature)
+          feature = st_as_sfc.geo_list(evt$feature, crs = crs)
           list(evt = evt$event, timestamp = evt$timestamp, feature = feature)
         }
       )

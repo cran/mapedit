@@ -1,7 +1,8 @@
 #' Interactively Edit a Map
 #'
 #' @param x \code{leaflet} or \code{mapview} map to edit
-#' @param ... other arguments
+#' @param ... other arguments for \code{mapview::addFeatures()} when
+#'          using \code{editMap.NULL} or \code{selectFeatures}
 #'
 #' @return \code{sf} simple features or \code{GeoJSON}
 #'
@@ -25,10 +26,32 @@ editMap <- function(x, ...) {
 #'          is unlikely to require a change.
 #' @param record \code{logical} to record all edits for future playback.
 #' @param viewer \code{function} for the viewer.  See Shiny \code{\link[shiny]{viewer}}.
+#'          NOTE: when using \code{browserViewer(browser = getOption("browser"))} to
+#'          open the app in the default browser, the browser window will automatically
+#'          close when closing the app (by pressing "done" or "cancel") in most browsers.
+#'          Firefox is an exception. See Details for instructions on how to enable this
+#'          behaviour in Firefox.
+#' @param crs see \code{\link[sf]{st_crs}}.
+#' @param title \code{string} to customize the title of the UI window.  The default
+#'          is "Edit Map".
+#'
+#' @details
+#'   When setting \code{viewer = browserViewer(browser = getOption("browser"))} and
+#'   the systems default browser is Firefox, the browser window will likely not
+#'   automatically close when the app is closed (by pressing "done" or "cancel").
+#'   To enable automatic closing of tabs/windows in Firefox try the following:
+#'   \itemize{
+#'     \item{input "about:config " to your firefox address bar and hit enter}
+#'     \item{make sure your "dom.allow_scripts_to_close_windows" is true}
+#'   }
+#'
 #' @export
 editMap.leaflet <- function(
   x = NULL, targetLayerId = NULL, sf = TRUE,
-  ns = "mapedit-edit", record = FALSE, viewer = shiny::paneViewer(), ...
+  ns = "mapedit-edit", record = FALSE, viewer = shiny::paneViewer(),
+  crs = 4326,
+  title = "Edit Map",
+  ...
 ) {
   stopifnot(!is.null(x), inherits(x, "leaflet"))
 
@@ -44,7 +67,25 @@ editMap.leaflet <- function(
       editModUI(id = ns, height="97%"),
       height=NULL, width=NULL
     ),
-    miniUI::gadgetTitleBar("Edit Map", right = miniUI::miniTitleBarButton("done", "Done", primary = TRUE))
+    miniUI::gadgetTitleBar(
+      title = title,
+      right = miniUI::miniTitleBarButton("done", "Done", primary = TRUE)
+    ),
+    tags$script(HTML(
+"
+// close browser window on session end
+$(document).on('shiny:disconnected', function() {
+  // check to make sure that button was pressed
+  //  to avoid websocket disconnect caused by some other reason than close
+  if(
+    Shiny.shinyapp.$inputValues['cancel:shiny.action'] ||
+    Shiny.shinyapp.$inputValues['done:shiny.action']
+  ) {
+    window.close()
+  }
+})
+"
+    ))
   )
 
   server <- function(input, output, session) {
@@ -54,7 +95,8 @@ editMap.leaflet <- function(
       x,
       targetLayerId = targetLayerId,
       sf = sf,
-      record = record
+      record = record,
+      crs = crs
     )
 
     observe({crud()})
@@ -80,13 +122,17 @@ editMap.leaflet <- function(
 #' @export
 editMap.mapview <- function(
   x = NULL, targetLayerId = NULL, sf = TRUE,
-  ns = "mapedit-edit", record = FALSE, viewer = shiny::paneViewer(), ...
+  ns = "mapedit-edit", record = FALSE, viewer = shiny::paneViewer(),
+  crs = 4326,
+  title = "Edit Map",
+  ...
 ) {
   stopifnot(!is.null(x), inherits(x, "mapview"), inherits(x@map, "leaflet"))
 
   editMap.leaflet(
     x@map, targetLayerId = targetLayerId, sf = sf,
-    ns = ns, viewer = viewer, record = TRUE
+    ns = ns, viewer = viewer, record = TRUE, crs = crs,
+    title = title
   )
 }
 
@@ -129,6 +175,25 @@ editFeatures = function(x, ...) {
 #'          of add, edit, delete.
 #' @param record \code{logical} to record all edits for future playback.
 #' @param viewer \code{function} for the viewer.  See Shiny \code{\link[shiny]{viewer}}.
+#'          NOTE: when using \code{browserViewer(browser = getOption("browser"))} to
+#'          open the app in the default browser, the browser window will automatically
+#'          close when closing the app (by pressing "done" or "cancel") in most browsers.
+#'          Firefox is an exception. See Details for instructions on how to enable this
+#'          behaviour in Firefox.
+#' @param label \code{character} vector or \code{formula} for the
+#'          content that will appear in label/tooltip.
+#' @param crs see \code{\link[sf]{st_crs}}.
+#'
+#' @details
+#'   When setting \code{viewer = browserViewer(browser = getOption("browser"))} and
+#'   the systems default browser is Firefox, the browser window will likely not
+#'   automatically close when the app is closed (by pressing "done" or "cancel").
+#'   To enable automatic closing of tabs/windows in Firefox try the following:
+#'   \itemize{
+#'     \item{input "about:config " to your firefox address bar and hit enter}
+#'     \item{make sure your "dom.allow_scripts_to_close_windows" is true}
+#'   }
+#'
 #' @export
 editFeatures.sf = function(
   x,
@@ -136,15 +201,22 @@ editFeatures.sf = function(
   mergeOrder = c("add", "edit", "delete"),
   record = FALSE,
   viewer = shiny::paneViewer(),
+  crs = 4326,
+  label = NULL,
   ...
 ) {
 
-  x = mapview:::checkAdjustProjection(x)
   x$edit_id = as.character(1:nrow(x))
 
   if (is.null(map)) {
+    x = mapview:::checkAdjustProjection(x)
     map = mapview::mapview()@map
-    map = mapview::addFeatures(map, data=x, layerId=~x$edit_id, group = "toedit")
+    map = mapview::addFeatures(
+      map, data=x, layerId=~x$edit_id,
+      label=label,
+      labelOptions = leaflet::labelOptions(direction="top", offset=c(0,-40)),
+      group = "toedit"
+    )
     ext = mapview:::createExtent(x)
     map = leaflet::fitBounds(
       map,
@@ -160,13 +232,16 @@ editFeatures.sf = function(
     }
     map = mapview::addFeatures(
       map, data=x, layerId=~x$edit_id,
+      label=label,
+      labelOptions = leaflet::labelOptions(direction="top", offset=c(0,-40)),
       group = "toedit"
     )
   }
 
   crud = editMap(
     map, targetLayerId = "toedit",
-    viewer = viewer, record = record, ...
+    viewer = viewer, record = record,
+    crs = crs, ...
   )
 
   merged <- Reduce(
