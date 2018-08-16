@@ -2,17 +2,15 @@
 % Please edit documentation in R/edit.R
 \name{editFeatures}
 \alias{editFeatures}
-\alias{editFeatures}
 \alias{editFeatures.sf}
-\alias{editFeatures}
 \alias{editFeatures.Spatial}
 \title{Interactively Edit Map Features}
 \usage{
 editFeatures(x, ...)
 
 \method{editFeatures}{sf}(x, map = NULL, mergeOrder = c("add", "edit",
-  "delete"), record = FALSE, viewer = shiny::paneViewer(), crs = 4326,
-  label = NULL, ...)
+  "delete"), record = FALSE, viewer = shiny::paneViewer(),
+  crs = 4326, label = NULL, title = "Edit Map", ...)
 
 \method{editFeatures}{Spatial}(x, ...)
 }
@@ -42,6 +40,9 @@ behaviour in Firefox.}
 
 \item{label}{\code{character} vector or \code{formula} for the
 content that will appear in label/tooltip.}
+
+\item{title}{\code{string} to customize the title of the UI window.  The default
+is "Edit Map".}
 }
 \description{
 Interactively Edit Map Features

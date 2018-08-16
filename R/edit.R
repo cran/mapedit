@@ -107,6 +107,17 @@ $(document).on('shiny:disconnected', function() {
       )
     })
 
+    # if browser viewer and user closes tab/window
+    #  then Shiny does not stop so we will stopApp
+    #  when a session ends.  This works fine unless a user might
+    #  have two sessions open.  Closing one will also close the
+    #  other.
+    session$onSessionEnded(function() {
+      # should this be a cancel where we send NULL
+      #  or a done where we send crud()
+      shiny::stopApp(isolate(crud()))
+    })
+
     shiny::observeEvent(input$cancel, { shiny::stopApp (NULL) })
   }
 
@@ -183,6 +194,8 @@ editFeatures = function(x, ...) {
 #' @param label \code{character} vector or \code{formula} for the
 #'          content that will appear in label/tooltip.
 #' @param crs see \code{\link[sf]{st_crs}}.
+#' @param title \code{string} to customize the title of the UI window.  The default
+#'          is "Edit Map".
 #'
 #' @details
 #'   When setting \code{viewer = browserViewer(browser = getOption("browser"))} and
@@ -203,6 +216,7 @@ editFeatures.sf = function(
   viewer = shiny::paneViewer(),
   crs = 4326,
   label = NULL,
+  title = "Edit Map",
   ...
 ) {
 
@@ -241,7 +255,7 @@ editFeatures.sf = function(
   crud = editMap(
     map, targetLayerId = "toedit",
     viewer = viewer, record = record,
-    crs = crs, ...
+    crs = crs, title = title, ...
   )
 
   merged <- Reduce(
