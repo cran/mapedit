@@ -1,7 +1,7 @@
 #' Interactively Edit a Map
 #'
 #' @param x \code{leaflet} or \code{mapview} map to edit
-#' @param ... other arguments for \code{mapview::addFeatures()} when
+#' @param ... other arguments for \code{leafem::addFeatures()} when
 #'          using \code{editMap.NULL} or \code{selectFeatures}
 #'
 #' @return \code{sf} simple features or \code{GeoJSON}
@@ -35,6 +35,9 @@ editMap <- function(x, ...) {
 #' @param title \code{string} to customize the title of the UI window.  The default
 #'          is "Edit Map".
 #' @param editor \code{character} either "leaflet.extras" or "leafpm"
+#' @param editorOptions \code{list} of options suitable for passing to
+#'     either \code{leaflet.extras::addDrawToolbar} or
+#'     \code{leafpm::addPmToolbar}.
 #'
 #' @details
 #'   When setting \code{viewer = browserViewer(browser = getOption("browser"))} and
@@ -53,6 +56,7 @@ editMap.leaflet <- function(
   crs = 4326,
   title = "Edit Map",
   editor = c("leaflet.extras", "leafpm"),
+  editorOptions = list(),
   ...
 ) {
   stopifnot(!is.null(x), inherits(x, "leaflet"))
@@ -99,7 +103,8 @@ $(document).on('shiny:disconnected', function() {
       sf = sf,
       record = record,
       crs = crs,
-      editor = editor
+      editor = editor,
+      editorOptions = editorOptions
     )
 
     observe({crud()})
@@ -140,6 +145,7 @@ editMap.mapview <- function(
   crs = 4326,
   title = "Edit Map",
   editor = c("leaflet.extras", "leafpm"),
+  editorOptions = list(),
   ...
 ) {
   stopifnot(!is.null(x), inherits(x, "mapview"), inherits(x@map, "leaflet"))
@@ -148,13 +154,15 @@ editMap.mapview <- function(
     x@map, targetLayerId = targetLayerId, sf = sf,
     ns = ns, viewer = viewer, record = TRUE, crs = crs,
     title = title,
-    editor = editor
+    editor = editor,
+    editorOptions = editorOptions
   )
 }
 
 #' @name editMap
 #' @export
-editMap.NULL = function(x, editor = c("leaflet.extras", "leafpm"), ...) {
+editMap.NULL = function(x, editor = c("leaflet.extras", "leafpm"),
+                        editorOptions = list(), ...) {
   m = mapview::mapview()@map
   m = leaflet::fitBounds(
     m,
@@ -163,7 +171,8 @@ editMap.NULL = function(x, editor = c("leaflet.extras", "leafpm"), ...) {
     lng2 = 180, #as.numeric(sf::st_bbox(x)[3]),
     lat2 = 90 #as.numeric(sf::st_bbox(x)[4])
   )
-  ed = editMap(m, record = TRUE, editor = editor)
+  ed = editMap(m, record = TRUE, editor = editor,
+               editorOptions = editorOptions)
   ed_record <- ed$finished
   attr(ed_record, "recorder") <- attr(ed, "recorder", exact = TRUE)
   ed_record
@@ -202,6 +211,9 @@ editFeatures = function(x, ...) {
 #' @param title \code{string} to customize the title of the UI window.  The default
 #'          is "Edit Map".
 #' @param editor \code{character} either "leaflet.extras" or "leafpm"
+#' @param editorOptions \code{list} of options suitable for passing to
+#'     either \code{leaflet.extras::addDrawToolbar} or
+#'     \code{leafpm::addPmToolbar}.
 #'
 #' @details
 #'   When setting \code{viewer = browserViewer(browser = getOption("browser"))} and
@@ -224,6 +236,7 @@ editFeatures.sf = function(
   label = NULL,
   title = "Edit Map",
   editor = c("leaflet.extras", "leafpm"),
+  editorOptions = list(),
   ...
 ) {
 
@@ -239,15 +252,15 @@ editFeatures.sf = function(
   x$edit_id = as.character(1:nrow(x))
 
   if (is.null(map)) {
-    x = mapview:::checkAdjustProjection(x)
+    x = checkAdjustProjection(x)
     map = mapview::mapview()@map
-    map = mapview::addFeatures(
+    map = leafem::addFeatures(
       map, data=x, layerId=~x$edit_id,
       label=label,
       labelOptions = leaflet::labelOptions(direction="top", offset=c(0,-40)),
       group = "toedit"
     )
-    ext = mapview:::createExtent(x)
+    ext = createExtent(x)
     map = leaflet::fitBounds(
       map,
       lng1 = ext[1],
@@ -255,12 +268,12 @@ editFeatures.sf = function(
       lng2 = ext[2],
       lat2 = ext[4]
     )
-    map = mapview::addHomeButton(map = map, ext = ext)
+    map = leafem::addHomeButton(map = map, ext = ext)
   } else {
     if(inherits(map, "mapview")) {
       map = map@map
     }
-    map = mapview::addFeatures(
+    map = leafem::addFeatures(
       map, data=x, layerId=~x$edit_id,
       label=label,
       labelOptions = leaflet::labelOptions(direction="top", offset=c(0,-40)),
@@ -268,27 +281,13 @@ editFeatures.sf = function(
     )
   }
 
-  # currently we don't have a way to set custom options for leaflet.pm
-  # and we will want to customize allowSelfIntersection depending on feature types
   if(inherits(map, "mapview")) map = map@map
-  if(editor[1] == "leafpm") {
-    # now let's see if any of the features are polygons
-    if(any(sf::st_dimension(x) == 2)) {
-      map = leafpm::addPmToolbar(
-        map,
-        targetGroup = "toedit",
-        toolbarOptions = leafpm::pmToolbarOptions(drawCircle = FALSE),
-        drawOptions = leafpm::pmDrawOptions(allowSelfIntersection = FALSE),
-        editOptions = leafpm::pmEditOptions(allowSelfIntersection = FALSE),
-        cutOptions = leafpm::pmCutOptions(allowSelfIntersection = FALSE)
-      )
-    }
-  }
 
   crud = editMap(
     map, targetLayerId = "toedit",
     viewer = viewer, record = record,
-    crs = crs, title = title, editor = editor, ...
+    crs = crs, title = title,
+    editor = editor, editorOptions = editorOptions, ...
   )
 
   merged <- Reduce(
