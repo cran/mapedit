@@ -22,7 +22,7 @@ selectModUI <- function(id, ...) {
 #' @param styleTrue named \code{list} of valid \code{CSS} for selected features
 #'
 #' @return server function for Shiny module
-#' @import shiny
+# #' @importFrom shiny NS observeEvent
 #' @export
 selectMod <- function(
   input, output, session,
@@ -81,7 +81,7 @@ selectMod <- function(
 #' @param ... other arguments to \code{leafletOutput()}
 #'
 #' @return ui for Shiny module
-#' @import shiny
+# #' @importFrom shiny NS observeEvent
 #' @export
 editModUI <- function(id, ...) {
   ns <- shiny::NS(id)
@@ -105,7 +105,7 @@ editModUI <- function(id, ...) {
 #'     \code{leafpm::addPmToolbar}.
 #'
 #' @return server function for Shiny module
-#' @import shiny
+# #' @importFrom shiny NS observeEvent
 #' @export
 editMod <- function(
   input, output, session,
@@ -184,7 +184,8 @@ editMod <- function(
     # now modify finished to match edited
     lapply(deleted$features, function(x) {
       loc <- match(x$properties$`_leaflet_id`, ids)
-      if(length(loc) > 0) {
+      if(!is.null(loc) && length(loc) > 0) {
+        ids <<- ids[-loc]
         featurelist$finished[loc] <<- NULL
       }
     })

@@ -13,7 +13,7 @@ selectFeatures = function(x, ...) {
 #' @name selectFeatures
 #' @param mode one of "click" or "draw".
 #' @param op the geometric binary predicate to use for the selection.
-#'           Can be any of \code{\link{geos_binary_pred}}. In the spatial
+#'           Can be any of \code{sf::geos_binary_pred}. In the spatial
 #'           operation the drawn features will be evaluated as x and the supplied
 #'           feature as y. Ignored if \code{mode = "click"}.
 #' @param map a background \code{leaflet} or \code{mapview} map
@@ -65,7 +65,7 @@ selectFeatures.sf = function(
   if (mode == "click") {
 
     if (is.null(map)) {
-      map = mapview::mapView(...)@map
+      map = initMap(proj4str = sf::st_crs(x)$proj4string)
       map = leafem::addFeatures(
         map, data = x, layerId = ~x$edit_id, label = label, ...
       )

@@ -1,4 +1,23 @@
-## mapedit 0.6.0
+# mapedit 0.7.0 (2025-04-20)
+
+#### ✨ features and improvements
+
+* add editAttributes app and RStudio addin #120
+
+#### 🐛 bug fixes
+
+* update deprecated dplyr::select_() calls #124
+
+
+# mapedit 0.6.2 (2025-04-19)
+
+### Bug Fix
+
+* properly flush deleted features when user deletes multiple. See [issue #106](https://github.com/r-spatial/mapedit/issues/106).
+
+* allow `mapedit` to work in a loop or in sequence. See [issue #83](https://github.com/r-spatial/mapedit/issues/83).
+
+* make behavior of `selectFeatures` consistent between modes `"draw"` and `"click"` when working with features with no CRS.  See [issue #110](https://github.com/r-spatial/mapedit/issues/110).
 
 ### New Features
 
@@ -6,14 +25,9 @@
 
 * Add `editorOptions` for better control of options in `edit*` and `draw*` functions.  See [pull #100](https://github.com/r-spatial/mapedit/pull/100) and [pull #103](https://github.com/r-spatial/mapedit/pull/103).
 
-## mapedit 0.5.0
-
 ### New Features
 
 * add `editor  = "leafpm"` to `draw*()` and `edit*()` functions to use the `Leaflet.pm` pluging for editing.  `Leaflet.pm` provides support for creating and editing holes, snapping, and integrates better with some `multi*` features.  Note, `mapedit` now offers two editors `"leaflet.extras"` and `"leafpm"`, since each have advantages and disadvantages.
-
-
-## mapedit 0.4.3
 
 ### New Features
 
@@ -28,9 +42,6 @@
 * fix precision to match new Leaflet 6 digits
 
 * expose title argument to editFeatures and drawFeatures
-
-
-## mapedit 0.4.1
 
 ### Bug Fix
 
@@ -64,11 +75,13 @@
 
 * fix merge_edit to only consider last edit when there are multiple edits per layerId
 
+
 # mapedit 0.3.1
 
 ### Bug Fix
 
 * multiple edits and deletes resulting in multiple FeatureCollections not handled properly causing some actions to not be considered when converting to `sf`; thanks @tim-salabim for identifying
+
 
 # mapedit 0.3.0
 
@@ -97,6 +110,7 @@ within one RStudio window/context.
 
 * fix internal `combine_list_of_sf` with length 0 `list`; found when `editFeatures()` and save with no changes
 
+
 # mapedit 0.2.0
 
 * add Shiny module functionality
@@ -115,12 +129,14 @@ within one RStudio window/context.
 
 * camelCase `editMap` and `selectMap`
 
+
 # mapedit 0.0.2
 
 * add dependency on `dplyr`
 * add dependency on `sf`
 * `edit_map()` now returns `sf` instead of `geojson` by default.  Toggle
     behavior with the `sf` argument.
+
 
 # mapedit 0.0.1
 
