@@ -22,7 +22,6 @@ selectModUI <- function(id, ...) {
 #' @param styleTrue named \code{list} of valid \code{CSS} for selected features
 #'
 #' @return server function for Shiny module
-# #' @importFrom shiny NS observeEvent
 #' @export
 selectMod <- function(
   input, output, session,
@@ -46,7 +45,7 @@ selectMod <- function(
   df <- data.frame()
 
   # a container for our selections
-  selections <- reactive({
+  selections <- shiny::reactive({
     # when used in modules, we get an event with blank id
     #  on initialize so also make sure we have an id
     id = as.character(input[[select_evt]]$id)
@@ -81,7 +80,6 @@ selectMod <- function(
 #' @param ... other arguments to \code{leafletOutput()}
 #'
 #' @return ui for Shiny module
-# #' @importFrom shiny NS observeEvent
 #' @export
 editModUI <- function(id, ...) {
   ns <- shiny::NS(id)
@@ -99,13 +97,11 @@ editModUI <- function(id, ...) {
 #'          \code{GeoJSON}.
 #' @param record \code{logical} to record all edits for future playback.
 #' @param crs see \code{\link[sf]{st_crs}}.
-#' @param editor \code{character} either "leaflet.extras" or "leafpm"
+#' @param editor \code{character} currently, only "leafpm" is supported.
 #' @param editorOptions \code{list} of options suitable for passing to
-#'     either \code{leaflet.extras::addDrawToolbar} or
 #'     \code{leafpm::addPmToolbar}.
 #'
 #' @return server function for Shiny module
-# #' @importFrom shiny NS observeEvent
 #' @export
 editMod <- function(
   input, output, session,
@@ -114,7 +110,7 @@ editMod <- function(
   sf = TRUE,
   record = FALSE,
   crs = 4326,
-  editor = c("leaflet.extras", "leafpm"),
+  editor = "leafpm",
   editorOptions = list()
 ) {
   editor <- match.arg(editor)
@@ -126,7 +122,7 @@ editMod <- function(
 
   output$map <- leaflet::renderLeaflet({leafmap})
 
-  featurelist <- reactiveValues(
+  featurelist <- shiny::reactiveValues(
     drawn = list(),
     edited_all = list(),
     deleted_all = list(),
@@ -205,7 +201,7 @@ editMod <- function(
     lapply(
       c(EVT_DRAW, EVT_EDIT, EVT_DELETE, EVT_ALL),
       function(evt) {
-        observeEvent(input[[evt]], {
+        shiny::observeEvent(input[[evt]], {
           recorder <<- c(
             recorder,
             list(
@@ -224,7 +220,7 @@ editMod <- function(
 
   # collect all of the the features into a list
   #  by action
-  returnlist <- reactive({
+  returnlist <- shiny::reactive({
     workinglist <- list(
       drawn = featurelist$drawn,
       edited = featurelist$edited_all,

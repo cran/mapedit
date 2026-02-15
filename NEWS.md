@@ -1,3 +1,10 @@
+# mapedit 0.8.0 (2026-02-15)
+
+#### ✨ features and improvements
+
+* BREAKING CHANGE: due to the removal of `leaflet.extras` from CRAN, only `leafpm` supported as the editor.
+
+
 # mapedit 0.7.0 (2025-04-20)
 
 #### ✨ features and improvements
